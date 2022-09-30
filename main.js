@@ -73,8 +73,15 @@ allList.addEventListener("click", deleteOrEdit);
 
 
 // Helpers
-function deleteOrEdit(){
+function deleteOrEdit(event){
+    const targetBtn = event.target;
+    const entry = targetBtn.parentNode;
 
+    if(targetBtn.id == "delete"){
+        deleteEntry(entry);
+    }else if(targetBtn.id == "edit"){
+        editEntry(entry);
+    }
 }
 function deleteEntry(entry){
     entry_list.splice(entry.id, 1);
