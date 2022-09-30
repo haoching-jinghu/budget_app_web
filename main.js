@@ -67,38 +67,29 @@ addExpense.addEventListener('click', function(){
     clearInput([expenseTitle, expenseAmount]);
 });
 
+incomeList.addEventListener("click", deleteOrEdit);
+expenseList.addEventListener("click", deleteOrEdit);
+allList.addEventListener("click", deleteOrEdit);
 
 
 // Helpers
-function calculateTotal(type, entry_list){
-    let sum = 0;
-    entry_list.forEach(entry => {
-        if(entry.type == type){
-            sum += entry.amount;
-        }
-    });
-    return sum;
-}
+function deleteOrEdit(){
 
-function calculateBalance(income, outcome){
-    return (income - outcome);
 }
-
-function active(element){
-    element.classList.add("active");
+function deleteEntry(entry){
+    entry_list.splice(entry.id, 1);
+    updateUI();
 }
-function show(element){
-    element.classList.remove("hide");
-}
-function inactive(elements){
-    elements.forEach(element => {
-        element.classList.remove("active");
-    });
-}
-function hide(elements){
-    elements.forEach(element => {
-        element.classList.add("hide");
-    });
+function editEntry(entry){
+    let entry = entry_list[entry.id];
+    if(entry.type == "income"){
+        incomeAmount.value = entry.value;
+        incomeTitle.value = entry.title;
+    }else if(entry.type == "expense"){
+        expenseAmount.value = entry.value;
+        expenseTitle.value = entry.title;
+    }
+    deleteEntry(entry);
 }
 function updateUI(){
     income = calculateTotal("income", entry_list);
@@ -110,20 +101,61 @@ function updateUI(){
     e_balance.innerHTML = `<small>$</small>${balance}`;
 
     clearElement([incomeList, expenseList, allList]);
-
+    entry_list.forEach( (entry, index) => {
+        if(entry.type == "income"){
+            showEntry(incomeList, entry.type, entry.title, entry.amount, index);
+        }else if(entry.type == "expense"){
+            showEntry(expenseList, entry.type, entry.title, entry.amount, index);
+        }
+        showEntry(allList, entry.type, entry.title, entry.amount, index);
+    })
+    updateChart(income, outcome);
 }
-function clearInput(inputs){
-    inputs.forEach(input => {
-        input.value = "";
-    });
-}
-
-function showEntry(){
+function showEntry(list, type, title, amount, id){
     const entry = `<li id="${id}" class="${type}">
                         <div class="entry">${title}: $${amount}</div>
                         <div id="edit"></div>
                         <div id="delete"></div>
                     </li>`;
     const position = "afterbegin";
-    allList.insertAdjacentElement(position, entry);
+    list.insertAdjacentElement(position, entry);
 }
+function clearElement(elements){
+    elements.forEach( element => {
+        element.innerHTML = "";
+    })
+}
+function calculateTotal(type, entry_list){
+    let sum = 0;
+    entry_list.forEach(entry => {
+        if(entry.type == type){
+            sum += entry.amount;
+        }
+    })
+    return sum;
+}
+function calculateBalance(income, outcome){
+    return (income - outcome);
+}
+function active(element){
+    element.classList.add("active");
+}
+function show(element){
+    element.classList.remove("hide");
+}
+function inactive(elements){
+    elements.forEach(element => {
+        element.classList.remove("active");
+    })
+}
+function hide(elements){
+    elements.forEach(element => {
+        element.classList.add("hide");
+    })
+}
+function clearInput(inputs){
+    inputs.forEach(input => {
+        input.value = "";
+    })
+}
+
