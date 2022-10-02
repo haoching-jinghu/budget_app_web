@@ -1,107 +1,135 @@
-// select title elements
-const e_balance = document.querySelector(".balance .value");
-const e_incomeTotal = document.querySelector(".income-total");
-const e_outcomeTotal = document.querySelector(".outcome-total");
+// DISPLAY ELEMENTS
+const balanceEl = document.querySelector(".balance .value");
+const incomeTotalEl = document.querySelector(".income-total");
+const outcomeTotalEl = document.querySelector(".outcome-total");
+const incomeEl = document.querySelector("#income");
+const expenseEl = document.querySelector("#expense");
+const allEl = document.querySelector("#all");
+const incomeListEl = document.querySelector("#income .list");
+const expenseListEl = document.querySelector("#expense .list");
+const allListEl = document.querySelector("#all .list");
 
-// select tab elements
-const e_expenseTab = document.querySelector("#expense");
-const e_incomeTab = document.querySelector("#income");
-const e_allTab = document.querySelector("#all");
+// SELECT BUTTONS
+const expenseTab = document.querySelector(".tab1");
+const incomeTab = document.querySelector(".tab2");
+const allTab = document.querySelector(".tab3");
 
-const expenseList = document.querySelector("#expense .list");
-const incomeList = document.querySelector("#income .list");
-const allList = document.querySelector("#all .list");
-
-// select tab buttons
-const b_expenseTab = document.querySelector(".tab1");
-const b_incomeTab = document.querySelector(".tab2");
-const b_allTab = document.querySelector(".tab3");
-
-// input buttons
-const incomeTitle = document.getElementById("income-title-input");
-const incomeAmount = document.getElementById("income-amount-input");
-const addIncome = document.querySelector(".add-income");
+// INPUT BUTTONS
 const expenseTitle = document.getElementById("expense-title-input");
 const expenseAmount = document.getElementById("expense-amount-input");
 const addExpense = document.querySelector(".add-expense");
+const incomeTitle = document.getElementById("income-title-input");
+const incomeAmount = document.getElementById("income-amount-input");
+const addIncome = document.querySelector(".add-income");
 
-// variables
-let ENTRY_LIST;
-let balance = 0, income = 0, outcome = 0;
-const DELETE = "delete", EDIT = "edit"
+// VARIABLES
+let ENTRY_LIST = [];
+let income = 0, outcome = 0, balance = 0;
+const DELETE = "delete", EDIT = "edit";
 
-// local storage functions
 ENTRY_LIST = JSON.parse(localStorage.getItem("entry_list")) || [];
+updateUI();
 
-// event listener
-b_expenseTab.addEventListener("click", function(){
-    show(e_expenseTab);
-    hide([e_incomeTab, e_allTab]);
-    active(b_expenseTab);
-    inactive([b_incomeTab, b_allTab]);
-});
-b_incomeTab.addEventListener("click", function(){
-    show(e_incomeTab);
-    hide([e_expenseTab, e_allTab]);
-    active(b_incomeTab);
-    inactive([b_expenseTab, b_allTab]);
-});
-b_allTab.addEventListener("click", function(){
-    show(e_allTab);
-    hide([e_expenseTab, e_incomeTab]);
-    active(b_allTab);
-    inactive([b_expenseTab, b_incomeTab]);
-});
+// EVENT LISTENERS
+expenseTab.addEventListener("click", function(){
+    show(expenseEl);
+    hide([incomeEl, allEl]);
+    active(expenseTab);
+    inactive([incomeTab, allTab]);
+})
+incomeTab.addEventListener("click", function(){
+    show(incomeEl);
+    hide([expenseEl, allEl]);
+    active(incomeTab);
+    inactive([expenseTab, allTab]);
+})
+allTab.addEventListener("click", function(){
+    show(allEl);
+    hide([expenseEl, incomeEl]);
+    active(allTab);
+    inactive([expenseTab, incomeTab]);
+})
 addExpense.addEventListener("click", function(){
     if(!expenseTitle.value || !expenseAmount.value) return;
 
-    let expense ={
+    let entry = {
         type : "expense",
         title : expenseTitle.value,
         amount : parseFloat(expenseAmount.value)
     }
-    ENTRY_LIST.push(expense);
-
+    ENTRY_LIST.push(entry);
     updateUI();
     clearInput([expenseTitle, expenseAmount]);
 })
 addIncome.addEventListener("click", function(){
     if(!incomeTitle.value || !incomeAmount.value) return;
 
-    let income ={
+    let entry = {
         type : "income",
         title : incomeTitle.value,
         amount : parseFloat(incomeAmount.value)
     }
-    ENTRY_LIST.push(income);
-
+    ENTRY_LIST.push(entry);
     updateUI();
     clearInput([incomeTitle, incomeAmount]);
 })
 
-// helpers
+expenseListEl.addEventListener("click", deleteOrEdit);
+incomeListEl.addEventListener("click", deleteOrEdit);
+allListEl.addEventListener("click", deleteOrEdit);
+
+// HELPERS
+function deleteOrEdit(event){
+    const targetBtn = event.target;
+    const entry = targetBtn.parentNode;
+    if( targetBtn.id == DELETE ){
+        deleteEntry(entry);
+    }else if(targetBtn.id == EDIT ){
+        editEntry(entry);
+    }
+}
+function deleteEntry(entry){
+    ENTRY_LIST.splice( entry.id, 1);
+
+    updateUI();
+}
+function editEntry(entry){
+    let ENTRY = ENTRY_LIST[entry.id];
+
+    if(ENTRY.type == "income"){
+        incomeAmount.value = ENTRY.amount;
+        incomeTitle.value = ENTRY.title;
+    }else if(ENTRY.type == "expense"){
+        expenseAmount.value = ENTRY.amount;
+        expenseTitle.value = ENTRY.title;
+    }
+
+    deleteEntry(entry);
+}
 function updateUI(){
+    // calculate total and balance
     income = calculateTotal("income", ENTRY_LIST);
     outcome = calculateTotal("expense", ENTRY_LIST);
     balance = calculateBalance(income, outcome);
 
     // update UI
-    e_incomeTotal.innerHTML = `<small>$</small>${income}`;
-    e_outcomeTotal.innerHTML = `<small>$</small>${outcome}`;
-    e_balance.innerHTML = `<small>$</small>${balance}`;
-    
-    clearElement([incomeList, expenseList, allList]);
+    balanceEl.innerHTML = `<small>$</small>${balance}`;
+    incomeTotalEl.innerHTML = `<small>$</small>${income}`;
+    outcomeTotalEl.innerHTML = `<small>$</small>${outcome}`;
+    clearElement([expenseListEl, incomeListEl, allListEl]);
     ENTRY_LIST.forEach( (entry, index) => {
         if(entry.type == "expense"){
-            showEntry(expenseList, entry.type, entry.title, entry.amount, index);
+            showElement(expenseListEl, entry.type, entry.title, entry.amount, index);
         }else if(entry.type == "income"){
-            showEntry(incomeList, entry.type, entry.title, entry.amount, index);
+            showElement(incomeListEl, entry.type, entry.title, entry.amount, index);
         }
-        showEntry(allList, entry.type, entry.title, entry.amount, index)
+        showElement(allListEl, entry.type, entry.title, entry.amount, index);
     })
+    updateChart(income, outcome);
+    localStorage.setItem("entry_list", JSON.stringify(ENTRY_LIST));
 }
-function showEntry(list, type, title, amount, index){
-    const entry = ` <li id="${index} class="${type}">
+function showElement(list, type, title, amount, index){
+    const entry = `<li id="${index}" class="${type}">
                         <div class="entry">${title}: $${amount}</div>
                         <div id="edit"></div>
                         <div id="delete"></div>
@@ -110,13 +138,12 @@ function showEntry(list, type, title, amount, index){
     list.insertAdjacentHTML(position, entry);
 }
 function clearElement(elements){
-    elements.forEach( element => {
+    elements.forEach(element => {
         element.innerHTML = "";
     })
 }
 function calculateTotal(type, list){
     let sum = 0;
-
     list.forEach( entry => {
         if(entry.type == type){
             sum += entry.amount;
@@ -128,25 +155,23 @@ function calculateBalance(income, outcome){
     return (income - outcome);
 }
 function clearInput(inputs){
-    inputs.forEach( input => {
+    inputs.forEach(input => {
         input.value = "";
     })
-}
-function active(element){
-    element.classList.add("active");
 }
 function show(element){
     element.classList.remove("hide");
 }
-function inactive(elements){
-    elements.forEach(element => {
-        element.classList.remove("active");
-    })
-}
 function hide(elements){
     elements.forEach(element => {
         element.classList.add("hide");
-    })
+    });
 }
-
-
+function active(element){
+    element.classList.add("active");
+}
+function inactive(elements){
+    elements.forEach(element => {
+        element.classList.remove("active");
+    });
+}
